@@ -13,7 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	calculate "github.com/ArteShow/Calculation_Service/pkg/Calculation"
+	calculate "github.com/ArteShow/Calculator/pkg/Calculation"
 )
 
 var (
