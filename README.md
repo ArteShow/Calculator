@@ -68,6 +68,20 @@ It supports the following operations:
 
   Example response: {"id": 4,"status": 200,"result": 4,"Error":""}
 
+== Using the Graphical Interface ==
+  To use the graphical interface, follow these steps:
+
+  1. Wait til a small Window comes
+
+  2. Use the dropdown menu to select an action:
+     - "Calculate" to evaluate an expression.
+     - "Expressions" to retrieve all previously evaluated expressions.
+     - "Get Expression by ID" to retrieve a specific expression by its ID.
+
+  4. Enter the required input in the text field and click the corresponding button to perform the action.
+
+  5. The result will be displayed in the text area below.
+
 == Cool Feature ==
   You can add a timer for an arithmetic operation, such as multiplication:
 
