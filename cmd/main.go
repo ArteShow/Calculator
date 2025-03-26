@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/ArteShow/Calculation_Service/application"
-	"github.com/ArteShow/Calculation_Service/internal"
+	"github.com/ArteShow/Calculator/application"
+	"github.com/ArteShow/Calculator/internal"
 )
 
 func main() {

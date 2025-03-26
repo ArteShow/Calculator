@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -39,7 +40,7 @@ type Expressions struct {
 	ID     int     `json:"id"`
 	Status int     `json:"status"`
 	Result float64 `json:"result"`
-	Error  error
+	Error  string
 }
 
 // SendExpressionsList sends the entire list of expressions as a response
@@ -75,7 +76,7 @@ func GenerateID(w http.ResponseWriter, r *http.Request) {
 		ID:     int(newID),
 		Status: 0,
 		Result: 0,
-		Error:  nil,
+		Error:  "",
 	}
 	ExpressionByID[int(newID)] = expression
 	log.Println("✅ New ID generated:", newID)
@@ -126,7 +127,7 @@ func SendExpressionById(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
-	w.WriteHeader(http.StatusOK)
+	//w.WriteHeader(http.StatusOK)
 }
 
 // StoreExpression stores the expression sent in the request
@@ -169,7 +170,7 @@ func Calculate(expression string) {
 	var mu sync.Mutex
 	var statusCode int
 	var finalResult float64
-	var finalError error
+	var finalError string
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -187,7 +188,8 @@ func Calculate(expression string) {
 				mu.Lock()
 				if err != nil {
 					log.Println("❌ Error in calculation:", err)
-					finalError = err
+					finalError = fmt.Sprintf("%v", err)
+					statusCode = code
 				} else {
 					log.Printf("✅ Calculation: %s = %f, StatusCode: %d\n", expr, result, code)
 					finalResult += result
