@@ -93,15 +93,15 @@ func CalcBasic(expression string) (float64, error, int) {
 
 	// Count the mathematical symbols
 	Logger.Println("Cleaned up the expression")
-	var lastOperator string
+	//var lastOperator string
 	for _, letter := range String {
 		newLetter := string(letter)
 		if newLetter == "+" || newLetter == "-" || newLetter == "*" || newLetter == "/" {
-			if lastOperator == newLetter {
+			/*if lastOperator == newLetter {
 				Logger.Println("[ERROR]: error while checking the mathematical symbols")
 				return 0.0, errors.New("Something went wrong. Please try without minus"), 422
-			}
-			lastOperator = newLetter
+			}*/
+			//lastOperator = newLetter
 			MathOperators = append(MathOperators, newLetter)
 		}
 	}
