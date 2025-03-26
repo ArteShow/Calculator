@@ -41,28 +41,32 @@ It supports the following operations:
   Congratulations! You just started the calculator.
 
 == Usage ==
-  To interact with the calculator, open a terminal (e.g., Windows CMD or PowerShell) and use the following curl commands:
+  To interact with the calculator, open the Windows terminal:
+
+  Press Win + R, type cmd, and press Enter.
+
+  Important: The backslashes () in the JSON body are required to escape the double quotes ("), ensuring the expression is correctly interpreted by the program.
 
   Perform a calculation:
-  curl -X POST "http://localhost:8082/api/v1/calculate" -H "Content-Type: application/json" -d "{"expression": "2+2"}"
+  curl -X POST "http://localhost:8082/api/v1/calculate" -H "Content-Type: application/json" -d "{\"expression\": \"2+2\"}"
 
-  Modify {"expression": "2+2"} to use any arithmetic expression.
+  Modify {\"expression\": \"2+2\"} to use any arithmetic expression.
 
-  The response will be in the format: { "id": 1 }. Note the ID.
+  The response will be in the format: {"id": 1}. Note the ID.
 
   Retrieve all expressions:
   curl -X GET http://localhost:8082/api/v1/expressions
 
-  Example response: { "expression": { "2+2": { "id": 3, "status": 0, "result": 0, "Error": null } } }
+  Example response: {"expression":{"2+2":{"id": 1,"status": 200,"result": 4,"Error":""}}}
 
-  Here, the ID is 3. This will show all previously evaluated expressions.
+  Here, the ID is 1. This will show all previously evaluated expressions.
 
   Retrieve a specific expression by ID:
   curl -X GET http://localhost:8082/api/v1/expression/{your_id}
 
   Replace {your_id} with the actual ID from the previous command.
 
-  Example response: { "id": 4, "status": 200, "result": 4, "Error": null }
+  Example response: {"id": 4,"status": 200,"result": 4,"Error":""}
 
 == Cool Feature ==
   You can add a timer for an arithmetic operation, such as multiplication:
