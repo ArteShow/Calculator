@@ -18,3 +18,4 @@ func createJWT(userID int, role string, key string) (string, error) {
 
     return token.SignedString([]byte(key))
 }
+
