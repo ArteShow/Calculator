@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 )
 
 func CreateDB(path string) (*sql.DB, error) {
@@ -57,6 +58,14 @@ func DeleteData(db *sql.DB, tableName string, condition string) error {
 	return nil
 }
 
+func OpenDatabase(path string) (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", path)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
 func UpdateData(db *sql.DB, tableName string, data map[string]interface{}, condition string) error {
 	query := "UPDATE " + tableName + " SET "
 	for col, _ := range data {
@@ -75,4 +84,22 @@ func UpdateData(db *sql.DB, tableName string, data map[string]interface{}, condi
 		return err
 	}
 	return nil
+}
+
+func GetValueByField(path, field string) (string, error) {
+	db, err := OpenDatabase(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to open db: %w", err)
+	}
+	defer db.Close()
+
+	query := fmt.Sprintf("SELECT %s FROM users LIMIT 1", field)
+
+	var result string
+	err = db.QueryRow(query).Scan(&result)
+	if err != nil {
+		return "", fmt.Errorf("failed to get %s: %w", field, err)
+	}
+
+	return result, nil
 }
