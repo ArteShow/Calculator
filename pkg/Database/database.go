@@ -3,13 +3,18 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"log"
+
+	_ "modernc.org/sqlite"
 )
 
 func CreateDB(path string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", path)
+	db, err := sql.Open("sqlite", path)
 	if err != nil {
+		log.Printf("❌ Failed to open DB at path %s: %v", path, err)
 		return nil, err
 	}
+	log.Println("✅ Database connection created 😊")
 	return db, nil
 }
 
@@ -18,88 +23,127 @@ func CreateTable(db *sql.DB, tableName string, columns map[string]string) error 
 	for col, typ := range columns {
 		query += col + " " + typ + ", "
 	}
-	query = query[:len(query)-2] + ");" // Remove the last comma and space, then close the parenthesis
+	query = query[:len(query)-2] + ");"
 
 	_, err := db.Exec(query)
 	if err != nil {
+		log.Printf("❌ Failed to create table %s: %v", tableName, err)
 		return err
 	}
+	log.Printf("✅ Table %s created (or already exists) 😎", tableName)
 	return nil
 }
 
 func InsertData(db *sql.DB, tableName string, data map[string]interface{}) error {
-	query := "INSERT INTO " + tableName + " ("
+	query := "INSERT OR IGNORE INTO " + tableName + " ("
 	values := "("
-	for col, _ := range data {
+	args := []interface{}{}
+
+	for col, val := range data {
 		query += col + ", "
 		values += "?, "
+		args = append(args, val)
 	}
-	query = query[:len(query)-2] + ") VALUES " + values[:len(values)-2] + ");" // Remove the last comma and space, then close the parenthesis
 
-	stmt, err := db.Prepare(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
+	query = query[:len(query)-2] + ") VALUES " + values[:len(values)-2] + ");"
 
-	_, err = stmt.Exec(data)
+	log.Printf("📝 Query: %s", query)
+	log.Printf("🧾 Args: %v", args)
+
+	_, err := db.Exec(query, args...)
 	if err != nil {
-		return err
+		log.Printf("❌ Failed to insert data: %v", err)
+		return fmt.Errorf("failed to insert data: %w", err)
 	}
+
+	log.Println("✅ Insert (or ignore) successful 🚀")
 	return nil
 }
-
 func DeleteData(db *sql.DB, tableName string, condition string) error {
 	query := "DELETE FROM " + tableName + " WHERE " + condition + ";"
 	_, err := db.Exec(query)
 	if err != nil {
+		log.Printf("❌ Failed to delete data from %s: %v", tableName, err)
 		return err
 	}
+	log.Println("🗑️ Data deleted successfully!")
 	return nil
 }
 
 func OpenDatabase(path string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", path)
+	db, err := sql.Open("sqlite", path)
 	if err != nil {
+		log.Printf("❌ Failed to open database: %v", err)
 		return nil, err
 	}
+	log.Println("📂 Database opened!")
 	return db, nil
 }
 
 func UpdateData(db *sql.DB, tableName string, data map[string]interface{}, condition string) error {
 	query := "UPDATE " + tableName + " SET "
-	for col, _ := range data {
+	args := []interface{}{}
+	for col, val := range data {
 		query += col + " = ?, "
+		args = append(args, val)
 	}
-	query = query[:len(query)-2] + " WHERE " + condition + ";" // Remove the last comma and space, then add the condition
+	query = query[:len(query)-2] + " WHERE " + condition + ";"
 
 	stmt, err := db.Prepare(query)
 	if err != nil {
+		log.Printf("❌ Failed to prepare update: %v", err)
 		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(data)
+	_, err = stmt.Exec(args...)
 	if err != nil {
+		log.Printf("❌ Failed to update data: %v", err)
 		return err
 	}
+	log.Println("✏️ Data updated successfully!")
 	return nil
 }
 
-func GetValueByField(path, field string) (string, error) {
+func GetUserID(path, username string) (string, error) {
 	db, err := OpenDatabase(path)
 	if err != nil {
-		return "", fmt.Errorf("failed to open db: %w", err)
+		log.Printf("❌ Failed to open DB: %v", err)
+		return "", err
 	}
 	defer db.Close()
 
-	query := fmt.Sprintf("SELECT %s FROM users LIMIT 1", field)
+	query := "SELECT id FROM users WHERE username = ? LIMIT 1"
+	var userID string
+	err = db.QueryRow(query, username).Scan(&userID)
+	if err != nil {
+		log.Printf("❌ Failed to get user ID for username '%s': %v", username, err)
+		return "", err
+	}
+	log.Printf("📤 Got user ID for username '%s': %s", username, userID)
+	return userID, nil
+}
 
-	var result string
+
+func GetMaxId(path string, table string) (int, error) {
+	db, err := OpenDatabase(path)
+	if err != nil {
+		log.Printf("❌ Failed to open DB: %v", err)
+		return 0, err
+	}
+	defer db.Close()
+
+	query := "SELECT COALESCE(MAX(id), 0) FROM " + table
+	var result int
 	err = db.QueryRow(query).Scan(&result)
 	if err != nil {
-		return "", fmt.Errorf("failed to get %s: %w", field, err)
+		log.Printf("❌ Failed to get max id: %v", err)
+		return 0, err
 	}
-
+	if result == 0 {
+		log.Println("ℹ️ No entries yet. Returning default ID = 1")
+		return 1, nil
+	}
+	log.Printf("📈 Max ID from table %s: %d", table, result)
 	return result, nil
 }

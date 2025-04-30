@@ -6,13 +6,13 @@ import (
 )
 
 type DatabaseConfig struct {
-	driver   string `json:"driver"`
-	path    string `json:"path"`
+	Driver   string `json:"driver"`
+	Path    string `json:"path"`
 }
 
 func LoadDatabaseConfig() (*DatabaseConfig, error) {
 	DatabseConfig := &DatabaseConfig{}
-	file, err := os.Open("/config/database.json")
+	file, err := os.Open("configs/database.json")
 	if err != nil {
 		return nil, err
 	}
@@ -30,5 +30,6 @@ func GetDatabasePath() string {
 	if err != nil {
 		panic(err)
 	}
-	return config.path
+	return config.Path
 }
+

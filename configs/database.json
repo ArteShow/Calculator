@@ -1,0 +1,6 @@
+{
+    "path": "db/database.db",
+    "name": "database.db",
+    "type": "sqlite",
+    "driver": "sqlite"
+}
