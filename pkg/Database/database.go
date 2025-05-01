@@ -8,6 +8,12 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	UserId   int    `json:"userId"`
+}
+
 func CreateDB(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path)
 	if err != nil {
@@ -122,6 +128,25 @@ func GetUserID(path, username string) (string, error) {
 	}
 	log.Printf("📤 Got user ID for username '%s': %s", username, userID)
 	return userID, nil
+}
+
+func GetUserByUsername(path, username string) (*User, error) {
+	db, err := OpenDatabase(path)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	query := "SELECT id, username, password FROM users WHERE username = ?"
+	var user User
+	err = db.QueryRow(query, username).Scan(&user.UserId, &user.Username, &user.Password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, err
+	}
+	return &user, nil
 }
 
 
