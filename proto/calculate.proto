@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "./proto;user";
+
+service UserService {
+  rpc SendUserData (UserDataRequest) returns (UserDataResponse);
+}
+
+message Calculation {
+  string expression = 1;
+}
+
+message UserDataRequest {
+  int32 userId = 1;
+  string username = 2;
+  Calculation calculation = 3;
+}
+
+message UserDataResponse {
+  string message = 1;
+}

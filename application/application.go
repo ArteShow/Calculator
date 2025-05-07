@@ -1,22 +1,26 @@
 package application
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
 
 	config "github.com/ArteShow/Calculator/pkg/Config"
 	database "github.com/ArteShow/Calculator/pkg/Database"
 	MyJWT "github.com/ArteShow/Calculator/pkg/JWT"
+	user "github.com/ArteShow/Calculator/proto"
+	"google.golang.org/grpc"
 )
 
 type User struct {
-	Username string `json:"username"`
+	Username string `json:"login"`
 	Password string `json:"password"`
 	UserId   int    `json:"userId"`
 }
@@ -38,18 +42,14 @@ func SaveRegUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-
+	fmt.Println("User name:", user.Username)
 	// Get the next user ID
 	UserId, err := database.GetMaxId(config.GetDatabasePath(), "users")
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get max userId %v", err), http.StatusInternalServerError)
 		return
 	}
-	if UserId == 1 {
-		log.Println("UserId is 1")
-	} else {
-		UserId += 1 // Correct increment
-	}
+	UserId++ // Increment the max ID to get the new user ID
 
 	// Prepare the user data to be saved
 	UserMap := map[string]interface{}{
@@ -83,7 +83,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-
+	fmt.Println("Login name:", login.Login)
 	// Get the user information based on the login (username) from the database
 	user, err := database.GetUserByUsername(config.GetDatabasePath(), login.Login)
 	if err != nil {
@@ -107,8 +107,8 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	// Send the token back to the client in the response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
-
 	// Here you can also include any GRPC calls if needed
+
 }
 
 
@@ -153,12 +153,51 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
+
+	// Get userId from token
 	userID, err := GetUserIdFromToken(w, r, w.Header().Get("Authorization"))
 	if err != nil {
 		http.Error(w, "Failed to get userId from token", http.StatusUnauthorized)
 		return
 	}
 	fmt.Println("User ID from token:", userID)
+
+	// gRPC call to send the user data and calculation
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	if err != nil {
+		http.Error(w, "Failed to connect to gRPC server", http.StatusInternalServerError)
+		return
+	}
+	defer conn.Close()
+
+	client := user.NewUserServiceClient(conn)
+
+	// Prepare the request with actual userId and calculation data
+	req := &user.UserDataRequest{
+		UserId:   int32(userID),    // Use the actual userId from the token
+		Username: "bro",            // You can modify this to fetch username dynamically if needed
+		Calculation: &user.Calculation{
+			Expression: calculation.Expression,
+		},
+	}
+
+	// Set a timeout for the request to the gRPC server
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	// Send the request
+	res, err := client.SendUserData(ctx, req)
+	if err != nil {
+		http.Error(w, "Failed to send user data to gRPC server", http.StatusInternalServerError)
+		return
+	}
+
+	// Log the response from the gRPC server
+	fmt.Println("Server says:", res.Message)
+
+	// Send the response back to the client
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": res.Message})
 }
 
 

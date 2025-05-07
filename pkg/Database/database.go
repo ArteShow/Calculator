@@ -167,8 +167,29 @@ func GetMaxId(path string, table string) (int, error) {
 	}
 	if result == 0 {
 		log.Println("ℹ️ No entries yet. Returning default ID = 1")
-		return 1, nil
+		return 0, nil
 	}
 	log.Printf("📈 Max ID from table %s: %d", table, result)
 	return result, nil
 }
+
+
+func GetMaxExpressionIdByUserId(db *sql.DB, userId int) (int, error) {
+	var maxId *int  // Use a pointer to handle potential NULL values
+	query := `SELECT MAX(id) FROM calculations WHERE userId = ?`
+	err := db.QueryRow(query, userId).Scan(&maxId)
+
+	// If no result was found (i.e., no expressions for the user)
+	if err == sql.ErrNoRows || maxId == nil {
+		return 0, nil // Return 0 if no expressions are found
+	}
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to query max expression id: %v", err)
+	}
+
+	// Return the maxId (dereference the pointer)
+	return *maxId, nil
+}
+
+
