@@ -25,6 +25,10 @@ type User struct {
 	UserId   int    `json:"userId"`
 }
 
+type Calculations struct{
+	Calculations []Calculation `json:"expression"`
+}
+
 type Calculation struct{
 	Expression string `json:"expression"`
 }
@@ -174,8 +178,7 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 
 	// Prepare the request with actual userId and calculation data
 	req := &user.UserDataRequest{
-		UserId:   int32(userID),    // Use the actual userId from the token
-		Username: "bro",            // You can modify this to fetch username dynamically if needed
+		UserId:   int32(userID),    // Use the actual userId from the token            // You can modify this to fetch username dynamically if needed
 		Calculation: &user.Calculation{
 			Expression: calculation.Expression,
 		},
@@ -208,24 +211,83 @@ func GetExpressions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println("User ID from token:", userID)
+
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	if err != nil {
+		http.Error(w, "Failed to connect to gRPC server", http.StatusInternalServerError)
+		return
+	}
+	defer conn.Close()
+
+	client := user.NewUserServiceClient(conn)
+
+	// Send gRPC request
+	res, err := client.GetUserCalculations(context.Background(), &user.UserIdRequest{
+		UserId: int32(userID),
+	})
+	if err != nil {
+		http.Error(w, "Failed to get calculations", http.StatusInternalServerError)
+		return
+	}
+
+	// Convert gRPC response to your `Calculations` struct
+	calcs := Calculations{}
+	for _, c := range res.Calculations {
+		calcs.Calculations = append(calcs.Calculations, Calculation{
+			Expression: c.Expression,
+		})
+	}
+
+	// Respond to client
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(calcs)
 }
+
 
 func GetExpressionById(w http.ResponseWriter, r *http.Request) {
-	userID, err := GetUserIdFromToken(w, r, w.Header().Get("Authorization"))
-	if err != nil {
-		http.Error(w, "Failed to get userId from token", http.StatusUnauthorized)
-		return
-	}
-	fmt.Println("User ID from token:", userID)
+    userID, err := GetUserIdFromToken(w, r, w.Header().Get("Authorization"))
+    if err != nil {
+        http.Error(w, "Failed to get userId from token", http.StatusUnauthorized)
+        return
+    }
+    fmt.Println("User ID from token:", userID)
 
-	expressionID := strings.TrimPrefix(r.URL.Path, "/api/v1/expression/")
-	expressionIDInt, err := strconv.Atoi(expressionID)
-	if err != nil {
-		http.Error(w, "Invalid expression ID", http.StatusBadRequest)
-		return
-	}
-	fmt.Println("Expression ID:", expressionIDInt)
+    expressionID := strings.TrimPrefix(r.URL.Path, "/api/v1/expression/")
+    expressionIDInt, err := strconv.Atoi(expressionID)
+    if err != nil {
+        http.Error(w, "Invalid expression ID", http.StatusBadRequest)
+        return
+    }
+    fmt.Println("Expression ID:", expressionIDInt)
+
+    conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) // Replace with your server address
+    if err != nil {
+        log.Fatalf("❌ Failed to connect to server: %v", err)
+    }
+    defer conn.Close()
+
+    // Create a new client instance for the UserService
+    client := user.NewUserServiceClient(conn)
+
+    // Create the request object with the userId and customId
+    request := &user.UserDataRequest{
+        UserId:   int32(userID),
+        CustomId: int32(expressionIDInt),
+    }
+
+    // Send the request using the SendUserData method
+    response, err := client.SendUserData(context.Background(), request)
+    if err != nil {
+        log.Fatalf("❌ Failed to send data: %v", err)
+    }
+
+    // Print the response message
+    fmt.Printf("Response from server: %s\n", response.GetMessage())
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{"message": response.GetMessage()})
 }
+
 
 func StartApplicationServer() {
 	http.HandleFunc("/api/v1/register", SaveRegUser)

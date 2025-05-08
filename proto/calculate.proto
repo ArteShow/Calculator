@@ -1,23 +1,40 @@
 syntax = "proto3";
 
 package user;
-
 option go_package = "./proto;user";
 
 service UserService {
   rpc SendUserData (UserDataRequest) returns (UserDataResponse);
-}
-
-message Calculation {
-  string expression = 1;
+  rpc GetUserCalculation (GetUserCalculationRequest) returns (UserCalculationResponse);
+  rpc GetUserCalculations (UserIdRequest) returns (UserCalculationsResponse);
 }
 
 message UserDataRequest {
   int32 userId = 1;
-  string username = 2;
-  Calculation calculation = 3;
+  int32 customId = 2; // Expression ID
 }
 
 message UserDataResponse {
   string message = 1;
+}
+
+message GetUserCalculationRequest {
+  int32 userId = 1;
+  int32 customId = 2;
+}
+
+message UserCalculationResponse {
+  string expression = 1;
+}
+
+message UserIdRequest {
+  int32 userId = 1;
+}
+
+message UserCalculationsResponse {
+  repeated Calculation calculations = 1;
+}
+
+message Calculation {
+  string expression = 1;
 }

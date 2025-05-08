@@ -68,7 +68,7 @@ func (x *Calculation) GetExpression() string {
 type UserDataRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int32                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	CustomId      int32                  `protobuf:"varint,2,opt,name=customId,proto3" json:"customId,omitempty"`
 	Calculation   *Calculation           `protobuf:"bytes,3,opt,name=calculation,proto3" json:"calculation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -111,11 +111,11 @@ func (x *UserDataRequest) GetUserId() int32 {
 	return 0
 }
 
-func (x *UserDataRequest) GetUsername() string {
+func (x *UserDataRequest) GetCustomId() int32 {
 	if x != nil {
-		return x.Username
+		return x.CustomId
 	}
-	return ""
+	return 0
 }
 
 func (x *UserDataRequest) GetCalculation() *Calculation {
@@ -169,6 +169,191 @@ func (x *UserDataResponse) GetMessage() string {
 	return ""
 }
 
+type UserIdRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserIdRequest) Reset() {
+	*x = UserIdRequest{}
+	mi := &file_proto_calculate_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserIdRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserIdRequest) ProtoMessage() {}
+
+func (x *UserIdRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_calculate_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserIdRequest.ProtoReflect.Descriptor instead.
+func (*UserIdRequest) Descriptor() ([]byte, []int) {
+	return file_proto_calculate_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *UserIdRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type UserCalculationsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Calculations  []*Calculation         `protobuf:"bytes,1,rep,name=calculations,proto3" json:"calculations,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserCalculationsResponse) Reset() {
+	*x = UserCalculationsResponse{}
+	mi := &file_proto_calculate_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserCalculationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserCalculationsResponse) ProtoMessage() {}
+
+func (x *UserCalculationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_calculate_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserCalculationsResponse.ProtoReflect.Descriptor instead.
+func (*UserCalculationsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_calculate_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UserCalculationsResponse) GetCalculations() []*Calculation {
+	if x != nil {
+		return x.Calculations
+	}
+	return nil
+}
+
+// New request message to get a single calculation by userId and customId
+type GetUserCalculationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int32                  `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	CustomId      int32                  `protobuf:"varint,2,opt,name=customId,proto3" json:"customId,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserCalculationRequest) Reset() {
+	*x = GetUserCalculationRequest{}
+	mi := &file_proto_calculate_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserCalculationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserCalculationRequest) ProtoMessage() {}
+
+func (x *GetUserCalculationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_calculate_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserCalculationRequest.ProtoReflect.Descriptor instead.
+func (*GetUserCalculationRequest) Descriptor() ([]byte, []int) {
+	return file_proto_calculate_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetUserCalculationRequest) GetUserId() int32 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *GetUserCalculationRequest) GetCustomId() int32 {
+	if x != nil {
+		return x.CustomId
+	}
+	return 0
+}
+
+type UserCalculationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Expression    string                 `protobuf:"bytes,1,opt,name=expression,proto3" json:"expression,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserCalculationResponse) Reset() {
+	*x = UserCalculationResponse{}
+	mi := &file_proto_calculate_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserCalculationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserCalculationResponse) ProtoMessage() {}
+
+func (x *UserCalculationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_calculate_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserCalculationResponse.ProtoReflect.Descriptor instead.
+func (*UserCalculationResponse) Descriptor() ([]byte, []int) {
+	return file_proto_calculate_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UserCalculationResponse) GetExpression() string {
+	if x != nil {
+		return x.Expression
+	}
+	return ""
+}
+
 var File_proto_calculate_proto protoreflect.FileDescriptor
 
 const file_proto_calculate_proto_rawDesc = "" +
@@ -180,12 +365,25 @@ const file_proto_calculate_proto_rawDesc = "" +
 	"expression\"z\n" +
 	"\x0fUserDataRequest\x12\x16\n" +
 	"\x06userId\x18\x01 \x01(\x05R\x06userId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x123\n" +
+	"\bcustomId\x18\x02 \x01(\x05R\bcustomId\x123\n" +
 	"\vcalculation\x18\x03 \x01(\v2\x11.user.CalculationR\vcalculation\",\n" +
 	"\x10UserDataResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage2L\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"'\n" +
+	"\rUserIdRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\x05R\x06userId\"Q\n" +
+	"\x18UserCalculationsResponse\x125\n" +
+	"\fcalculations\x18\x01 \x03(\v2\x11.user.CalculationR\fcalculations\"O\n" +
+	"\x19GetUserCalculationRequest\x12\x16\n" +
+	"\x06userId\x18\x01 \x01(\x05R\x06userId\x12\x1a\n" +
+	"\bcustomId\x18\x02 \x01(\x05R\bcustomId\"9\n" +
+	"\x17UserCalculationResponse\x12\x1e\n" +
+	"\n" +
+	"expression\x18\x01 \x01(\tR\n" +
+	"expression2\xee\x01\n" +
 	"\vUserService\x12=\n" +
-	"\fSendUserData\x12\x15.user.UserDataRequest\x1a\x16.user.UserDataResponseB\x0eZ\f./proto;userb\x06proto3"
+	"\fSendUserData\x12\x15.user.UserDataRequest\x1a\x16.user.UserDataResponse\x12T\n" +
+	"\x12GetUserCalculation\x12\x1f.user.GetUserCalculationRequest\x1a\x1d.user.UserCalculationResponse\x12J\n" +
+	"\x13GetUserCalculations\x12\x13.user.UserIdRequest\x1a\x1e.user.UserCalculationsResponseB\x0eZ\f./proto;userb\x06proto3"
 
 var (
 	file_proto_calculate_proto_rawDescOnce sync.Once
@@ -199,21 +397,30 @@ func file_proto_calculate_proto_rawDescGZIP() []byte {
 	return file_proto_calculate_proto_rawDescData
 }
 
-var file_proto_calculate_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_proto_calculate_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proto_calculate_proto_goTypes = []any{
-	(*Calculation)(nil),      // 0: user.Calculation
-	(*UserDataRequest)(nil),  // 1: user.UserDataRequest
-	(*UserDataResponse)(nil), // 2: user.UserDataResponse
+	(*Calculation)(nil),               // 0: user.Calculation
+	(*UserDataRequest)(nil),           // 1: user.UserDataRequest
+	(*UserDataResponse)(nil),          // 2: user.UserDataResponse
+	(*UserIdRequest)(nil),             // 3: user.UserIdRequest
+	(*UserCalculationsResponse)(nil),  // 4: user.UserCalculationsResponse
+	(*GetUserCalculationRequest)(nil), // 5: user.GetUserCalculationRequest
+	(*UserCalculationResponse)(nil),   // 6: user.UserCalculationResponse
 }
 var file_proto_calculate_proto_depIdxs = []int32{
 	0, // 0: user.UserDataRequest.calculation:type_name -> user.Calculation
-	1, // 1: user.UserService.SendUserData:input_type -> user.UserDataRequest
-	2, // 2: user.UserService.SendUserData:output_type -> user.UserDataResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0, // 1: user.UserCalculationsResponse.calculations:type_name -> user.Calculation
+	1, // 2: user.UserService.SendUserData:input_type -> user.UserDataRequest
+	5, // 3: user.UserService.GetUserCalculation:input_type -> user.GetUserCalculationRequest
+	3, // 4: user.UserService.GetUserCalculations:input_type -> user.UserIdRequest
+	2, // 5: user.UserService.SendUserData:output_type -> user.UserDataResponse
+	6, // 6: user.UserService.GetUserCalculation:output_type -> user.UserCalculationResponse
+	4, // 7: user.UserService.GetUserCalculations:output_type -> user.UserCalculationsResponse
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_proto_calculate_proto_init() }
@@ -227,7 +434,7 @@ func file_proto_calculate_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_calculate_proto_rawDesc), len(file_proto_calculate_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

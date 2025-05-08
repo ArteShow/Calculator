@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net"
@@ -21,12 +22,10 @@ type Server struct {
 	user.UnimplementedUserServiceServer
 }
 
-// This is the calculation handler
+// Calculation handler
 func CalculationExpression(userId int, expression string) string {
-	// You can replace this with real parsing logic
 	logs := fmt.Sprintf("User %d requested: %s", userId, expression)
 	fmt.Println(logs)
-	
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -67,7 +66,7 @@ func CalculationExpression(userId int, expression string) string {
 	if err != nil {
 		log.Fatalf("❌ Failed to get max expression ID: %v", err)
 	}
-	expressionID++ // Increment the max ID to get the new expression ID
+	expressionID++
 
 	err = database.InsertData(db, "calculations", map[string]interface{}{
 		"userId":     userId,
@@ -80,28 +79,69 @@ func CalculationExpression(userId int, expression string) string {
 		log.Fatalf("❌ Failed to save calculation: %v", err)
 	}
 
-	return fmt.Sprintf("Final result: %f", finalResult)
+	return fmt.Sprintf("Your expression was saved with ID %d", expressionID)
 }
 
-// gRPC method that handles incoming requests
-func (s *Server) SendUserData(ctx context.Context, req *user.UserDataRequest) (*user.UserDataResponse, error) {
-	userId := int(req.UserId)
-	expr := req.Calculation.Expression
-	var result string
-	if expr != ""{
-		result = CalculationExpression(userId, expr)
+// New gRPC method to get calculation by user ID and expression ID
+func (s *Server) GetExpressionByID(ctx context.Context, req *user.GetUserCalculationRequest) (*user.UserCalculationResponse, error) {
+	// Open the database connection
+	dbPath := config.GetDatabasePath() // Replace with your actual database path or method
+	db, err := database.OpenDatabase(dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
-	// Call the calc handler
-	
+	defer db.Close()
 
-	// Respond to client
-	return &user.UserDataResponse{
-		Message: result,
+	// Query for the calculation expression by userId and customId (expression ID)
+	var expression string
+	query := `SELECT calculation FROM calculations WHERE userId = ? AND id = ?`
+	err = db.QueryRow(query, req.UserId, req.CustomId).Scan(&expression)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no calculation found for UserId=%d and CustomId=%d", req.UserId, req.CustomId)
+		}
+		return nil, fmt.Errorf("failed to retrieve calculation: %v", err)
+	}
+
+	// Return the calculation expression
+	return &user.UserCalculationResponse{
+		Expression: expression,
 	}, nil
 }
 
-// Start the TCP gRPC server
-func StartTPCListener() {
+// gRPC method that handles user data (expression + user ID)
+func (s *Server) SendUserData(ctx context.Context, req *user.UserDataRequest) (*user.UserDataResponse, error) {
+    userId := int(req.UserId)
+    expressionID := int(req.CustomId)
+
+    // Open the database connection
+    dbPath := config.GetDatabasePath()
+    db, err := database.OpenDatabase(dbPath)
+    if err != nil {
+        return nil, fmt.Errorf("failed to connect to database: %v", err)
+    }
+    defer db.Close()
+
+    // Query for the calculation expression by userId and customId (expression ID)
+    var expression string
+    query := `SELECT calculation FROM calculations WHERE userId = ? AND id = ?`
+    err = db.QueryRow(query, userId, expressionID).Scan(&expression)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, fmt.Errorf("no calculation found for UserId=%d and ExpressionId=%d", userId, expressionID)
+        }
+        return nil, fmt.Errorf("failed to retrieve calculation: %v", err)
+    }
+
+    // Return the calculation expression
+    return &user.UserDataResponse{
+        Message: fmt.Sprintf("Retrieved expression: %s", expression),
+    }, nil
+}
+
+
+// Start gRPC TCP listener
+func StartTCPListener() {
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

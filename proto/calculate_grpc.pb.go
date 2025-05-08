@@ -19,7 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_SendUserData_FullMethodName = "/user.UserService/SendUserData"
+	UserService_SendUserData_FullMethodName        = "/user.UserService/SendUserData"
+	UserService_GetUserCalculation_FullMethodName  = "/user.UserService/GetUserCalculation"
+	UserService_GetUserCalculations_FullMethodName = "/user.UserService/GetUserCalculations"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -27,6 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
 	SendUserData(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserDataResponse, error)
+	GetUserCalculation(ctx context.Context, in *GetUserCalculationRequest, opts ...grpc.CallOption) (*UserCalculationResponse, error)
+	GetUserCalculations(ctx context.Context, in *UserIdRequest, opts ...grpc.CallOption) (*UserCalculationsResponse, error)
 }
 
 type userServiceClient struct {
@@ -47,11 +51,33 @@ func (c *userServiceClient) SendUserData(ctx context.Context, in *UserDataReques
 	return out, nil
 }
 
+func (c *userServiceClient) GetUserCalculation(ctx context.Context, in *GetUserCalculationRequest, opts ...grpc.CallOption) (*UserCalculationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserCalculationResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserCalculation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetUserCalculations(ctx context.Context, in *UserIdRequest, opts ...grpc.CallOption) (*UserCalculationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserCalculationsResponse)
+	err := c.cc.Invoke(ctx, UserService_GetUserCalculations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
 	SendUserData(context.Context, *UserDataRequest) (*UserDataResponse, error)
+	GetUserCalculation(context.Context, *GetUserCalculationRequest) (*UserCalculationResponse, error)
+	GetUserCalculations(context.Context, *UserIdRequest) (*UserCalculationsResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -64,6 +90,12 @@ type UnimplementedUserServiceServer struct{}
 
 func (UnimplementedUserServiceServer) SendUserData(context.Context, *UserDataRequest) (*UserDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendUserData not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserCalculation(context.Context, *GetUserCalculationRequest) (*UserCalculationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserCalculation not implemented")
+}
+func (UnimplementedUserServiceServer) GetUserCalculations(context.Context, *UserIdRequest) (*UserCalculationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserCalculations not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -104,6 +136,42 @@ func _UserService_SendUserData_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetUserCalculation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserCalculationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserCalculation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserCalculation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserCalculation(ctx, req.(*GetUserCalculationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetUserCalculations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUserCalculations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUserCalculations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUserCalculations(ctx, req.(*UserIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +182,14 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendUserData",
 			Handler:    _UserService_SendUserData_Handler,
+		},
+		{
+			MethodName: "GetUserCalculation",
+			Handler:    _UserService_GetUserCalculation_Handler,
+		},
+		{
+			MethodName: "GetUserCalculations",
+			Handler:    _UserService_GetUserCalculations_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

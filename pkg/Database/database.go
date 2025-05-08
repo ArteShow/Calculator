@@ -41,7 +41,7 @@ func CreateTable(db *sql.DB, tableName string, columns map[string]string) error 
 }
 
 func InsertData(db *sql.DB, tableName string, data map[string]interface{}) error {
-	query := "INSERT OR IGNORE INTO " + tableName + " ("
+	query := "INSERT OR REPLACE INTO " + tableName + " ("
 	values := "("
 	args := []interface{}{}
 
@@ -175,7 +175,7 @@ func GetMaxId(path string, table string) (int, error) {
 
 
 func GetMaxExpressionIdByUserId(db *sql.DB, userId int) (int, error) {
-	var maxId *int  // Use a pointer to handle potential NULL values
+	var maxId *int  // Pointer to handle potential NULL values
 	query := `SELECT MAX(id) FROM calculations WHERE userId = ?`
 	err := db.QueryRow(query, userId).Scan(&maxId)
 

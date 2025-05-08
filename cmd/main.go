@@ -13,7 +13,7 @@ func main(){
 	fmt.Println("Starting application...")
 	setup.Setup()
 	go func(){
-		internal.StartTPCListener()
+		internal.StartTCPListener()
 	}()
 	application.StartApplicationServer()
 }
