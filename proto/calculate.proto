@@ -4,14 +4,20 @@ package user;
 option go_package = "./proto;user";
 
 service UserService {
+  // Used for sending new expression, fetching one by ID, or all for a user
   rpc SendUserData (UserDataRequest) returns (UserDataResponse);
+
+  // Optional: if you want a separate endpoint just for fetching one expression by ID
   rpc GetUserCalculation (GetUserCalculationRequest) returns (UserCalculationResponse);
+
+  // Optional: if you want a separate endpoint just for fetching ALL calculations
   rpc GetUserCalculations (UserIdRequest) returns (UserCalculationsResponse);
 }
 
 message UserDataRequest {
   int32 userId = 1;
-  int32 customId = 2; // Expression ID
+  int32 customId = 2; // Optional: Expression ID to fetch one
+  Calculation calculation = 3; // Optional: Send a new expression
 }
 
 message UserDataResponse {
@@ -37,4 +43,6 @@ message UserCalculationsResponse {
 
 message Calculation {
   string expression = 1;
+  float result = 2;
 }
+

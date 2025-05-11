@@ -28,8 +28,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
+	// Used for sending new expression, fetching one by ID, or all for a user
 	SendUserData(ctx context.Context, in *UserDataRequest, opts ...grpc.CallOption) (*UserDataResponse, error)
+	// Optional: if you want a separate endpoint just for fetching one expression by ID
 	GetUserCalculation(ctx context.Context, in *GetUserCalculationRequest, opts ...grpc.CallOption) (*UserCalculationResponse, error)
+	// Optional: if you want a separate endpoint just for fetching ALL calculations
 	GetUserCalculations(ctx context.Context, in *UserIdRequest, opts ...grpc.CallOption) (*UserCalculationsResponse, error)
 }
 
@@ -75,8 +78,11 @@ func (c *userServiceClient) GetUserCalculations(ctx context.Context, in *UserIdR
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
+	// Used for sending new expression, fetching one by ID, or all for a user
 	SendUserData(context.Context, *UserDataRequest) (*UserDataResponse, error)
+	// Optional: if you want a separate endpoint just for fetching one expression by ID
 	GetUserCalculation(context.Context, *GetUserCalculationRequest) (*UserCalculationResponse, error)
+	// Optional: if you want a separate endpoint just for fetching ALL calculations
 	GetUserCalculations(context.Context, *UserIdRequest) (*UserCalculationsResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }

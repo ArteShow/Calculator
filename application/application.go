@@ -191,6 +191,7 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 	// Send the request
 	res, err := client.SendUserData(ctx, req)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Failed to send user data to gRPC server", http.StatusInternalServerError)
 		return
 	}
@@ -225,6 +226,7 @@ func GetExpressions(w http.ResponseWriter, r *http.Request) {
 		UserId: int32(userID),
 	})
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Failed to get calculations", http.StatusInternalServerError)
 		return
 	}

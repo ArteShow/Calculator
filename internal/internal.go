@@ -22,7 +22,6 @@ type Server struct {
 	user.UnimplementedUserServiceServer
 }
 
-// Calculation handler
 func CalculationExpression(userId int, expression string) string {
 	log.Printf("User %d requested: %s", userId, expression)
 
@@ -39,15 +38,15 @@ func CalculationExpression(userId int, expression string) string {
 			defer wg.Done()
 			select {
 			case <-ctx.Done():
-				log.Println("🛑 Timeout: Calculation aborted")
+				log.Println("Timeout: Calculation aborted")
 				return
 			default:
 				result, err, code := calculate.Calc(expr)
 				mu.Lock()
 				if err != nil {
-					log.Println("❌ Error in calculation:", err)
+					log.Println("Error in calculation:", err)
 				} else {
-					log.Printf("✅ Calculation: %s = %f, StatusCode: %d\n", expr, result, code)
+					log.Printf("Calculation: %s = %f, StatusCode: %d\n", expr, result, code)
 					finalResult += result
 				}
 				mu.Unlock()
@@ -59,11 +58,11 @@ func CalculationExpression(userId int, expression string) string {
 	dbPath := config.GetDatabasePath()
 	db, err := database.OpenDatabase(dbPath)
 	if err != nil {
-		log.Fatalf("❌ Failed to open DB: %v", err)
+		log.Fatalf("Failed to open DB: %v", err)
 	}
 	expressionID, err := database.GetMaxExpressionIdByUserId(db, userId)
 	if err != nil {
-		log.Fatalf("❌ Failed to get max expression ID: %v", err)
+		log.Fatalf("Failed to get max expression ID: %v", err)
 	}
 	expressionID++
 
@@ -75,45 +74,37 @@ func CalculationExpression(userId int, expression string) string {
 	})
 
 	if err != nil {
-		log.Fatalf("❌ Failed to save calculation: %v", err)
+		log.Fatalf("Failed to save calculation: %v", err)
 	}
 
 	return fmt.Sprintf("Your expression was saved with ID %d", expressionID)
 }
 
-// New gRPC method to get calculation by user ID and expression ID
-func (s *Server) GetExpressionByID(ctx context.Context, req *user.GetUserCalculationRequest) (*user.UserCalculationResponse, error) {
-	// Open the database connection
-	dbPath := config.GetDatabasePath() // Replace with your actual database path or method
-	db, err := database.OpenDatabase(dbPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %v", err)
-	}
-	defer db.Close()
-
-	// Query for the calculation expression by userId and customId (expression ID)
-	var expression string
-	query := `SELECT calculation FROM calculations WHERE userId = ? AND id = ?`
-	err = db.QueryRow(query, req.UserId, req.CustomId).Scan(&expression)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no calculation found for UserId=%d and CustomId=%d", req.UserId, req.CustomId)
-		}
-		return nil, fmt.Errorf("failed to retrieve calculation: %v", err)
-	}
-
-	// Return the calculation expression
-	return &user.UserCalculationResponse{
-		Expression: expression,
-	}, nil
-}
-
-// gRPC method that handles user data (expression + user ID)
 func (s *Server) SendUserData(ctx context.Context, req *user.UserDataRequest) (*user.UserDataResponse, error) {
 	userId := int(req.UserId)
 	expressionID := int(req.CustomId)
 
-	// Open the database connection
+	var expressionInput string
+	if req.Calculation != nil {
+		expressionInput = req.Calculation.Expression
+	}
+
+	// If both are empty/zero, return error
+	if expressionID == 0 && expressionInput == "" {
+		return &user.UserDataResponse{
+			Message: "❌ No expression or ID provided",
+		}, nil
+	}
+
+	// Case: Calculation input present
+	if expressionInput != "" {
+		message := CalculationExpression(userId, expressionInput)
+		return &user.UserDataResponse{
+			Message: message,
+		}, nil
+	}
+
+	// Case: ID present, fetch from DB
 	dbPath := config.GetDatabasePath()
 	db, err := database.OpenDatabase(dbPath)
 	if err != nil {
@@ -121,35 +112,68 @@ func (s *Server) SendUserData(ctx context.Context, req *user.UserDataRequest) (*
 	}
 	defer db.Close()
 
-	// Query for the calculation expression by userId and customId (expression ID)
 	var expression string
 	query := `SELECT calculation FROM calculations WHERE userId = ? AND id = ?`
 	err = db.QueryRow(query, userId, expressionID).Scan(&expression)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no calculation found for UserId=%d and ExpressionId=%d", userId, expressionID)
+			return nil, fmt.Errorf("❌ No calculation found for UserId=%d and ExpressionId=%d", userId, expressionID)
 		}
-		return nil, fmt.Errorf("failed to retrieve calculation: %v", err)
+		return nil, fmt.Errorf("❌ Failed to retrieve calculation: %v", err)
 	}
 
-	// Return the calculation expression
 	return &user.UserDataResponse{
-		Message: fmt.Sprintf("Retrieved expression: %s", expression),
+		Message: fmt.Sprintf("✅ Retrieved expression: %s", expression),
 	}, nil
 }
 
-// Start gRPC TCP listener
+
+func (s *Server) GetUserCalculations(ctx context.Context, req *user.UserIdRequest) (*user.UserCalculationsResponse, error) {
+	userId := int(req.UserId)
+
+	dbPath := config.GetDatabasePath()
+	db, err := database.OpenDatabase(dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %v", err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT calculation, result FROM calculations WHERE userId = ?", userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query calculations: %v", err)
+	}
+	defer rows.Close()
+
+	var calculations []*user.Calculation
+	for rows.Next() {
+		var expression string
+		var result float64
+		err := rows.Scan(&expression, &result)
+		if err != nil {
+			continue
+		}
+		calculations = append(calculations, &user.Calculation{
+			Expression: expression,
+			Result:     float32(result),
+		})
+	}
+
+	return &user.UserCalculationsResponse{
+		Calculations: calculations,
+	}, nil
+}
+
 func StartTCPListener() {
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("❌ Failed to listen: %v", err)
+		log.Fatalf("Failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
 	user.RegisterUserServiceServer(grpcServer, &Server{})
 
-	log.Println("Server is listening on port 50051...") // Replaced fmt.Println with log
+	log.Println("Server is listening on port 50051...")
 	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatalf("❌ Failed to serve: %v", err)
+		log.Fatalf("Failed to serve: %v", err)
 	}
 }

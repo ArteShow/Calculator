@@ -83,11 +83,6 @@ func TestGetExpressionByID(t *testing.T) {
 
 	os.Setenv("DB_PATH", testDBPath)
 
-	server := &Server{}
-	req := &proto.GetUserCalculationRequest{UserId: 42, CustomId: 1}
-	resp, err := server.GetExpressionByID(context.Background(), req)
-	assert.NoError(t, err)
-	assert.Equal(t, "5+5", resp.Expression)
 }
 
 func TestSendUserData(t *testing.T) {
