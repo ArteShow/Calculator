@@ -20,7 +20,7 @@ func CreateJWT(userID int, role string, key string) (string, error) {
         "user_id": userID,
         "iat":     now.Unix(),
 		"nbf": now.Add(time.Second * 1).Unix(),
-		"exp": now.Add(time.Minute * 15).Unix(),
+		"exp": now.Add(time.Minute * 120).Unix(),
 		"role":  role,
     })
 

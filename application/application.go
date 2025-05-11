@@ -25,11 +25,11 @@ type User struct {
 	UserId   int    `json:"userId"`
 }
 
-type Calculations struct{
+type Calculations struct {
 	Calculations []Calculation `json:"expression"`
 }
 
-type Calculation struct{
+type Calculation struct {
 	Expression string `json:"expression"`
 }
 
@@ -46,7 +46,8 @@ func SaveRegUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("User name:", user.Username)
+	log.Printf("User name: %s 😊", user.Username)
+
 	// Get the next user ID
 	UserId, err := database.GetMaxId(config.GetDatabasePath(), "users")
 	if err != nil {
@@ -74,7 +75,7 @@ func SaveRegUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("User saved successfully: %v", UserMap)
+	log.Printf("User saved successfully: %v 🎉", UserMap)
 	w.WriteHeader(http.StatusCreated) // Only write the status once here
 	json.NewEncoder(w).Encode(UserMap)
 }
@@ -87,7 +88,8 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("Login name:", login.Login)
+	log.Printf("Login name: %s 🔑", login.Login)
+
 	// Get the user information based on the login (username) from the database
 	user, err := database.GetUserByUsername(config.GetDatabasePath(), login.Login)
 	if err != nil {
@@ -111,10 +113,8 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	// Send the token back to the client in the response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
-	// Here you can also include any GRPC calls if needed
-
+	log.Printf("JWT token generated successfully for user ID: %d 🎉", user.UserId)
 }
-
 
 func GetUserIdFromToken(w http.ResponseWriter, r *http.Request, tokenstring string) (int, error) {
 	authHeader := r.Header.Get("Authorization")
@@ -126,7 +126,7 @@ func GetUserIdFromToken(w http.ResponseWriter, r *http.Request, tokenstring stri
 	parts := strings.Split(authHeader, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
 		http.Error(w, "Invalid Authorization header format", http.StatusUnauthorized)
-		return 0 , fmt.Errorf("invalid Authorization header format")
+		return 0, fmt.Errorf("invalid Authorization header format")
 	}
 
 	tokenString := parts[1]
@@ -145,7 +145,7 @@ func GetUserIdFromToken(w http.ResponseWriter, r *http.Request, tokenstring stri
 	userIDFloat, ok := claims["user_id"].(float64)
 	if !ok {
 		http.Error(w, "user_id not found", http.StatusUnauthorized)
-		return 0 , fmt.Errorf("user_id not found")
+		return 0, fmt.Errorf("user_id not found")
 	}
 	return int(userIDFloat), nil
 }
@@ -164,7 +164,7 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get userId from token", http.StatusUnauthorized)
 		return
 	}
-	fmt.Println("User ID from token:", userID)
+	log.Printf("User ID from token: %d 💡", userID)
 
 	// gRPC call to send the user data and calculation
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
@@ -178,7 +178,7 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 
 	// Prepare the request with actual userId and calculation data
 	req := &user.UserDataRequest{
-		UserId:   int32(userID),    // Use the actual userId from the token            // You can modify this to fetch username dynamically if needed
+		UserId:   int32(userID),
 		Calculation: &user.Calculation{
 			Expression: calculation.Expression,
 		},
@@ -196,13 +196,12 @@ func Calculate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Log the response from the gRPC server
-	fmt.Println("Server says:", res.Message)
+	log.Printf("Server says: %s 🗣️", res.Message)
 
 	// Send the response back to the client
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": res.Message})
 }
-
 
 func GetExpressions(w http.ResponseWriter, r *http.Request) {
 	userID, err := GetUserIdFromToken(w, r, w.Header().Get("Authorization"))
@@ -210,7 +209,7 @@ func GetExpressions(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get userId from token", http.StatusUnauthorized)
 		return
 	}
-	fmt.Println("User ID from token:", userID)
+	log.Printf("User ID from token: %d 📊", userID)
 
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
@@ -243,51 +242,49 @@ func GetExpressions(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(calcs)
 }
 
-
 func GetExpressionById(w http.ResponseWriter, r *http.Request) {
-    userID, err := GetUserIdFromToken(w, r, w.Header().Get("Authorization"))
-    if err != nil {
-        http.Error(w, "Failed to get userId from token", http.StatusUnauthorized)
-        return
-    }
-    fmt.Println("User ID from token:", userID)
+	userID, err := GetUserIdFromToken(w, r, w.Header().Get("Authorization"))
+	if err != nil {
+		http.Error(w, "Failed to get userId from token", http.StatusUnauthorized)
+		return
+	}
+	log.Printf("User ID from token: %d 📖", userID)
 
-    expressionID := strings.TrimPrefix(r.URL.Path, "/api/v1/expression/")
-    expressionIDInt, err := strconv.Atoi(expressionID)
-    if err != nil {
-        http.Error(w, "Invalid expression ID", http.StatusBadRequest)
-        return
-    }
-    fmt.Println("Expression ID:", expressionIDInt)
+	expressionID := strings.TrimPrefix(r.URL.Path, "/api/v1/expression/")
+	expressionIDInt, err := strconv.Atoi(expressionID)
+	if err != nil {
+		http.Error(w, "Invalid expression ID", http.StatusBadRequest)
+		return
+	}
+	log.Printf("Expression ID: %d ✨", expressionIDInt)
 
-    conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) // Replace with your server address
-    if err != nil {
-        log.Fatalf("❌ Failed to connect to server: %v", err)
-    }
-    defer conn.Close()
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure()) // Replace with your server address
+	if err != nil {
+		log.Fatalf("❌ Failed to connect to server: %v", err)
+	}
+	defer conn.Close()
 
-    // Create a new client instance for the UserService
-    client := user.NewUserServiceClient(conn)
+	// Create a new client instance for the UserService
+	client := user.NewUserServiceClient(conn)
 
-    // Create the request object with the userId and customId
-    request := &user.UserDataRequest{
-        UserId:   int32(userID),
-        CustomId: int32(expressionIDInt),
-    }
+	// Create the request object with the userId and customId
+	request := &user.UserDataRequest{
+		UserId:   int32(userID),
+		CustomId: int32(expressionIDInt),
+	}
 
-    // Send the request using the SendUserData method
-    response, err := client.SendUserData(context.Background(), request)
-    if err != nil {
-        log.Fatalf("❌ Failed to send data: %v", err)
-    }
+	// Send the request using the SendUserData method
+	response, err := client.SendUserData(context.Background(), request)
+	if err != nil {
+		log.Fatalf("❌ Failed to send data: %v", err)
+	}
 
-    // Print the response message
-    fmt.Printf("Response from server: %s\n", response.GetMessage())
+	// Print the response message
+	log.Printf("Response from server: %s 💬", response.GetMessage())
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(map[string]string{"message": response.GetMessage()})
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": response.GetMessage()})
 }
-
 
 func StartApplicationServer() {
 	http.HandleFunc("/api/v1/register", SaveRegUser)
@@ -295,5 +292,6 @@ func StartApplicationServer() {
 	http.HandleFunc("/api/v1/calculate", Calculate)
 	http.HandleFunc("/api/v1/expressions", GetExpressions)
 	http.HandleFunc("/api/v1/expression/", GetExpressionById)
+	log.Println("Server started at http://localhost:8082 🚀")
 	http.ListenAndServe(":8082", nil)
 }

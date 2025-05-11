@@ -24,8 +24,7 @@ type Server struct {
 
 // Calculation handler
 func CalculationExpression(userId int, expression string) string {
-	logs := fmt.Sprintf("User %d requested: %s", userId, expression)
-	fmt.Println(logs)
+	log.Printf("User %d requested: %s", userId, expression)
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -111,47 +110,46 @@ func (s *Server) GetExpressionByID(ctx context.Context, req *user.GetUserCalcula
 
 // gRPC method that handles user data (expression + user ID)
 func (s *Server) SendUserData(ctx context.Context, req *user.UserDataRequest) (*user.UserDataResponse, error) {
-    userId := int(req.UserId)
-    expressionID := int(req.CustomId)
+	userId := int(req.UserId)
+	expressionID := int(req.CustomId)
 
-    // Open the database connection
-    dbPath := config.GetDatabasePath()
-    db, err := database.OpenDatabase(dbPath)
-    if err != nil {
-        return nil, fmt.Errorf("failed to connect to database: %v", err)
-    }
-    defer db.Close()
+	// Open the database connection
+	dbPath := config.GetDatabasePath()
+	db, err := database.OpenDatabase(dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %v", err)
+	}
+	defer db.Close()
 
-    // Query for the calculation expression by userId and customId (expression ID)
-    var expression string
-    query := `SELECT calculation FROM calculations WHERE userId = ? AND id = ?`
-    err = db.QueryRow(query, userId, expressionID).Scan(&expression)
-    if err != nil {
-        if err == sql.ErrNoRows {
-            return nil, fmt.Errorf("no calculation found for UserId=%d and ExpressionId=%d", userId, expressionID)
-        }
-        return nil, fmt.Errorf("failed to retrieve calculation: %v", err)
-    }
+	// Query for the calculation expression by userId and customId (expression ID)
+	var expression string
+	query := `SELECT calculation FROM calculations WHERE userId = ? AND id = ?`
+	err = db.QueryRow(query, userId, expressionID).Scan(&expression)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no calculation found for UserId=%d and ExpressionId=%d", userId, expressionID)
+		}
+		return nil, fmt.Errorf("failed to retrieve calculation: %v", err)
+	}
 
-    // Return the calculation expression
-    return &user.UserDataResponse{
-        Message: fmt.Sprintf("Retrieved expression: %s", expression),
-    }, nil
+	// Return the calculation expression
+	return &user.UserDataResponse{
+		Message: fmt.Sprintf("Retrieved expression: %s", expression),
+	}, nil
 }
-
 
 // Start gRPC TCP listener
 func StartTCPListener() {
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("❌ Failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
 	user.RegisterUserServiceServer(grpcServer, &Server{})
 
-	fmt.Println("Server is listening on port 50051...")
+	log.Println("Server is listening on port 50051...") // Replaced fmt.Println with log
 	if err := grpcServer.Serve(listener); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Fatalf("❌ Failed to serve: %v", err)
 	}
 }
